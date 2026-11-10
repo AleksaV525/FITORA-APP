@@ -1,5 +1,5 @@
 // Omogućava da FITORA radi i bez interneta.
-const CACHE = 'fitora-1049aa61';
+const CACHE = 'fitora-fb32b303';
 const FILES = ['./', 'index.html', 'studio.html', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

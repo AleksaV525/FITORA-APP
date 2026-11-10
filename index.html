@@ -175,17 +175,22 @@ main.in{padding-block:14px calc(120px + env(safe-area-inset-bottom,0px))}
 .inplan{font:700 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text);padding-top:10px;border-top:1px solid var(--line);margin-top:4px}
 
 /* plan */
-.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:20px}
-.wd{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 2px 9px;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;box-shadow:var(--card-shadow)}
-.wd[aria-pressed=true]{border-color:var(--fg-3);background:var(--surface-2)}
-.wd-name{font:700 12px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:26px;justify-content:flex-end}
-.wd-name em{font:700 8px/1 var(--body);font-style:normal;letter-spacing:.1em;color:var(--accent-text)}
-.wd-bar{height:48px;display:flex;align-items:flex-end}
-.wd-bar i{display:block;width:8px;border-radius:4px;background:var(--fg-3)}
+.week{display:flex;gap:8px;margin:10px -16px 0;padding:14px 16px 16px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding-inline:16px;scrollbar-width:none}
+.week::-webkit-scrollbar{display:none}
+.wd{position:relative;flex:0 0 68px;scroll-snap-align:center;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:14px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;box-shadow:var(--card-shadow);color:var(--fg)}
+.wd-name{font:700 12px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3)}
+.wd-date{font:900 30px/1 var(--display);letter-spacing:.01em}
+.wd-bar{height:42px;display:flex;align-items:flex-end}
+.wd-bar i{display:block;width:10px;border-radius:5px;background:var(--fg-3)}
 .wd-bar i.zero{background:var(--line-2)}
-.wd[aria-pressed=true] .wd-bar i:not(.zero){background:var(--accent)}
-.wd-n{font:800 15px/1 var(--display);letter-spacing:.04em;color:var(--fg-3);font-variant-numeric:tabular-nums}
-.wd[aria-pressed=true] .wd-n{color:var(--fg)}
+.wd-n{font:600 11px/1 var(--body);color:var(--fg-3);white-space:nowrap}
+.wd.today .wd-name{color:var(--accent-text)}
+.wd-today{position:absolute;top:-9px;left:50%;transform:translateX(-50%);font:800 9px/1 var(--body);font-style:normal;letter-spacing:.1em;text-transform:uppercase;background:var(--bg);color:var(--accent-text);border:1px solid var(--accent-text);padding:3px 7px;border-radius:8px}
+.wd[aria-pressed=true]{background:var(--cta-bg);border-color:var(--cta-bg);color:var(--cta-fg)}
+.wd[aria-pressed=true] .wd-name,.wd[aria-pressed=true] .wd-n{color:var(--cta-fg);opacity:.8}
+.wd[aria-pressed=true] .wd-bar i{background:var(--cta-fg)}
+.wd[aria-pressed=true] .wd-bar i.zero{background:var(--cta-fg);opacity:.25}
+@media (min-width:720px){.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));margin-inline:0;padding-inline:0;overflow:visible}.wd{flex:none}}
 .day-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 24px;margin-top:28px}
 .day-head h2{font:900 clamp(38px,9vw,56px)/.9 var(--display);text-transform:uppercase}
 .day-head p{color:var(--fg-2);font-size:14px;margin-top:8px}
@@ -1476,7 +1481,6 @@ const EXERCISES = [
     range: 'week', pick: null, confirmReset: false, shareTab: 'send', shareImport: '', shareParsed: null, shareErr: ''
   });
   const dayHas = i => state.plan[DAYS[i].k].length > 0;
-  if (!dayHas(state.day)) { const f = DAYS.findIndex((_, i) => dayHas(i)); if (f >= 0) state.day = f; }
   const anim = () => state.settings.anim;
 
   function applyTheme() {
@@ -1577,14 +1581,18 @@ const EXERCISES = [
     clearFigs('plan');
     $('#plan-date').textContent = `${DAYS[TODAY].f}, ${fmtDate(NOW)}`;
     const maxSets = Math.max(12, ...DAYS.map(d => state.plan[d.k].reduce((n, e) => n + e.sets, 0)));
-    $('#week').innerHTML = DAYS.map((d, i) => {
+    const wk = $('#week');
+    wk.innerHTML = DAYS.map((d, i) => {
       const sets = state.plan[d.k].reduce((n, e) => n + e.sets, 0);
-      const h = sets ? Math.max(6, Math.round(sets / maxSets * 44)) : 2;
-      return `<button class="wd" data-i="${i}" aria-pressed="${i === state.day}" aria-label="${d.f}, ${sets} ${setsWord(sets)}">
-        <span class="wd-name">${d.s}${i === TODAY ? '<em>danas</em>' : ''}</span>
+      const h = sets ? Math.max(8, Math.round(sets / maxSets * 40)) : 3;
+      return `<button class="wd${i === TODAY ? ' today' : ''}" data-i="${i}" aria-pressed="${i === state.day}" aria-label="${d.f}, ${dateOfDay(i).getDate()}. ${MONTHS[dateOfDay(i).getMonth()]}${i === TODAY ? ', danas' : ''}, ${sets} ${setsWord(sets)}">
+        <span class="wd-name">${d.s}</span>
+        <span class="wd-date">${dateOfDay(i).getDate()}</span>
         <span class="wd-bar"><i style="height:${h}px" class="${sets ? '' : 'zero'}"></i></span>
-        <span class="wd-n">${sets || '–'}</span></button>`;
+        <span class="wd-n">${sets ? sets + ' ' + setsWord(sets) : 'odmor'}</span>${i === TODAY ? '<em class="wd-today">danas</em>' : ''}</button>`;
     }).join('');
+    const selBtn = wk.children[state.day];
+    if (selBtn && wk.scrollWidth > wk.clientWidth) wk.scrollLeft = selBtn.offsetLeft - (wk.clientWidth - selBtn.offsetWidth) / 2;
 
     const day = DAYS[state.day], list = state.plan[day.k];
     const sets = list.reduce((n, e) => n + e.sets, 0), done = list.reduce((n, e) => n + e.done.filter(Boolean).length, 0);
@@ -1753,7 +1761,6 @@ const EXERCISES = [
 
   function resetAll() {
     Object.assign(state, freshState(), { confirmReset: false, day: TODAY });
-    const f = DAYS.findIndex((_, i) => dayHas(i)); if (!dayHas(state.day) && f >= 0) state.day = f;
     applyTheme(); save(); refresh();
     toast('Podaci su obrisani');
   }
@@ -1913,7 +1920,6 @@ const EXERCISES = [
       else state.plan[d.k] = incoming[d.k];
     });
     state.sample = false;
-    const f = DAYS.findIndex((_, i) => dayHas(i)); if (!dayHas(state.day) && f >= 0) state.day = f;
     save(); closeOverlay(); setView('plan'); refresh();
     toast(merge ? 'Vežbe su dodate u tvoj plan' : 'Plan je uvezen');
   }
@@ -2069,6 +2075,12 @@ const EXERCISES = [
   /* ---------- start ---------- */
   if (!saved) save();
   refresh();
+  /* Ako se datum promenio dok je aplikacija bila u pozadini, učitaj iznova (otvara se na današnjem danu). */
+  const dayStamp = iso(NOW);
+  const checkDate = () => { if (iso(sod(new Date())) !== dayStamp) location.reload(); };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDate(); });
+  addEventListener('pageshow', checkDate);
+  setInterval(checkDate, 60000);
 })();
 
 </script>
